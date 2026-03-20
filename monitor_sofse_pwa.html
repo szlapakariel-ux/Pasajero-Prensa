@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Monitor SOFSE">
+<meta name="theme-color" content="#0a0f1e">
+<title>Monitor SOFSE</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0f1e;
+    --surface:   #111827;
+    --surface2:  #1a2236;
+    --border:    #1e2d45;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --accent:    #38bdf8;
+    --green:     #4ade80;
+    --red:       #f87171;
+    --yellow:    #fbbf24;
+    --mitre:     #3b82f6;
+    --roca:      #dc2626;
+    --sarmiento: #b45309;
+    --sanmartin: #f97316;
+    --belgrano:  #65a30d;
+    --costa:     #0891b2;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+  }
+
+  /* ── LOGIN ── */
+  #screen-login {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #screen-login::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: -120px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .login-logo {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+
+  .login-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .login-form {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .input-group label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  .input-group input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .input-group input:focus {
+    border-color: var(--accent);
+  }
+
+  .btn-login {
+    background: var(--accent);
+    color: #0a0f1e;
+    border: none;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s, transform 0.1s;
+    width: 100%;
+  }
+
+  .btn-login:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .login-error {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--red);
+    text-align: center;
+    display: none;
+  }
+
+  .login-note {
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+    max-width: 300px;
+  }
+
+  /* ── MONITOR ── */
+  #screen-monitor { display: none; flex-direction: column; min-height: 100vh; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,15,30,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar-left { display: flex; flex-direction: column; }
+
+  .topbar-title {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .topbar-ts {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+    font-family: var(--font-mono);
+  }
+
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  .btn-refresh {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .btn-refresh:active { background: var(--border); }
+
+  .btn-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .monitor-body {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Countdown bar */
+  .countdown-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  .countdown-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .countdown-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  /* Línea card */
+  .linea-card {
+    background: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .linea-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .linea-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .linea-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .linea-nombre {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
+  }
+
+  .linea-badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+
+  .badge-ok    { background: rgba(74,222,128,0.1); color: var(--green); }
+  .badge-alert { background: rgba(248,113,113,0.1); color: var(--red); }
+  .badge-load  { background: rgba(100,116,139,0.1); color: var(--muted); }
+
+  .linea-toggle { color: var(--muted); font-size: 14px; transition: transform 0.2s; }
+  .linea-toggle.open { transform: rotate(180deg); }
+
+  .linea-body { padding: 12px 16px; display: none; }
+  .linea-body.open { display: block; }
+
+  /* Filtros WA */
+  .wa-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+
+  .wa-filtros-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    width: 100%;
+    margin-bottom: 2px;
+  }
+
+  .cb-ramal {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .cb-ramal input[type=checkbox] {
+    cursor: pointer;
+    width: 13px; height: 13px;
+    accent-color: var(--accent);
+  }
+
+  /* Tabla alertas */
+  .alertas-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .alertas-tabla th {
+    text-align: left;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .alertas-tabla td {
+    padding: 7px 8px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    vertical-align: middle;
+  }
+
+  .alertas-tabla tr:last-child td { border-bottom: none; }
+
+  .ramal-grupo-titulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--red);
+    font-family: var(--font-mono);
+    padding: 8px 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .estado-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .sin-novedades {
+    font-size: 12px;
+    color: var(--green);
+    padding: 6px 0;
+    font-family: var(--font-mono);
+  }
+
+  /* Botón WA */
+  .btn-wa {
+    width: 100%;
+    background: #25d366;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.03em;
+  }
+  .btn-wa:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* Loading spinner */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    padding: 8px 0;
+  }
+
+  /* Animación entrada cards */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .linea-card { animation: fadeUp 0.3s ease both; }
+  .linea-card:nth-child(2) { animation-delay: 0.05s; }
+  .linea-card:nth-child(3) { animation-delay: 0.10s; }
+  .linea-card:nth-child(4) { animation-delay: 0.15s; }
+  .linea-card:nth-child(5) { animation-delay: 0.20s; }
+  .linea-card:nth-child(6) { animation-delay: 0.25s; }
+  .linea-card:nth-child(7) { animation-delay: 0.30s; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ PANTALLA LOGIN ══════════════════ -->
+<div id="screen-login">
+  <div class="login-logo">🚆 SOFSE</div>
+  <div class="login-title">Monitor<br>de Alertas</div>
+  <div class="login-sub">Todas las líneas — Tiempo real</div>
+
+  <div class="login-form">
+    <div class="input-group">
+      <label>Usuario</label>
+      <input type="text" id="inp-user" placeholder="Tu usuario SIGOF2" autocomplete="username" autocapitalize="off">
+    </div>
+    <div class="input-group">
+      <label>Contraseña</label>
+      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div id="login-error" class="login-error">Usuario o contraseña incorrectos</div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">INGRESAR</button>
+  </div>
+
+  <div class="login-note">
+    ⚠️ Requiere VPN activa para conectar con SIGOF2
+  </div>
+</div>
+
+<!-- ══════════════════ PANTALLA MONITOR ══════════════════ -->
+<div id="screen-monitor">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">🚆 Monitor SOFSE</div>
+      <div class="topbar-ts" id="topbar-ts">—</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-refresh" onclick="actualizarTodo()">↺ Actualizar</button>
+      <button class="btn-logout" onclick="doLogout()">✕</button>
+    </div>
+  </div>
+
+  <div class="monitor-body" id="monitor-body">
+    <!-- Se genera por JS -->
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════
+var BASE_URL      = "https://sigof2.sofse.gob.ar";
+var DEMORA_MINIMA = 10;
+var REFRESH_SEG   = 600;
+var DEBUG         = false;
+
+var LINEAS = [
+  {
+    nombre: "Mitre", color: "#3b82f6", cssVar: "--mitre",
+    configs: [
+      { config_id: 23, ramalesNombres: ["Ramal Mitre", "J.L. Suárez"],
+        fnRamal: function(n) { var p = parseInt(String(n).substring(0,2)); return (p>=35&&p<=36)?"J.L. Suárez":"Ramal Mitre"; } },
+      { config_id: 25, ramalesNombres: ["Tigre"],                    fnRamal: function(){ return "Tigre"; } },
+      { config_id: 26, ramalesNombres: ["Victoria - C. del Señor"],  fnRamal: function(){ return "Victoria - C. del Señor"; } },
+      { config_id: 62, ramalesNombres: ["Villa Ballester - Zárate"], fnRamal: function(){ return "Villa Ballester - Zárate"; } }
+    ]
+  },
+  {
+    nombre: "Roca", color: "#dc2626", cssVar: "--roca",
+    configs: [
+      { config_id: 39, ramalesNombres: ["Constitución - La Plata"],   fnRamal: function(){ return "Constitución - La Plata"; } },
+      { config_id: 40, ramalesNombres: ["C. - Alejandro Korn"],       fnRamal: function(){ return "C. - Alejandro Korn"; } },
+      { config_id: 41, ramalesNombres: ["C. - Bosques"],              fnRamal: function(){ return "C. - Bosques"; } },
+      { config_id: 42, ramalesNombres: ["C. - Ezeiza"],               fnRamal: function(){ return "C. - Ezeiza"; } },
+      { config_id: 43, ramalesNombres: ["La Plata - Htal. Romero"],   fnRamal: function(){ return "La Plata - Htal. Romero"; } },
+      { config_id: 45, ramalesNombres: ["Cañuelas - Lobos"],          fnRamal: function(){ return "Cañuelas - Lobos"; } },
+      { config_id: 47, ramalesNombres: ["Ezeiza - Cañuelas"],         fnRamal: function(){ return "Ezeiza - Cañuelas"; } },
+      { config_id: 49, ramalesNombres: ["C. - Gutiérrez"],            fnRamal: function(){ return "C. - Gutiérrez"; } },
+      { config_id: 50, ramalesNombres: ["C. - Chascomús"],            fnRamal: function(){ return "C. - Chascomús"; } },
+      { config_id: 51, ramalesNombres: ["C. - Monte"],                fnRamal: function(){ return "C. - Monte"; } },
+      { config_id: 163,ramalesNombres: ["Temperley - Haedo"],         fnRamal: function(){ return "Temperley - Haedo"; } }
+    ]
+  },
+  {
+    nombre: "Sarmiento", color: "#b45309", cssVar: "--sarmiento",
+    configs: [
+      { config_id: 16, ramalesNombres: ["Once - Moreno"],     fnRamal: function(){ return "Once - Moreno"; } },
+      { config_id: 37, ramalesNombres: ["Merlo - Lobos"],     fnRamal: function(){ return "Merlo - Lobos"; } },
+      { config_id: 52, ramalesNombres: ["Moreno - Mercedes"], fnRamal: function(){ return "Moreno - Mercedes"; } }
+    ]
+  },
+  {
+    nombre: "San Martín", color: "#f97316", cssVar: "--sanmartin",
+    configs: [
+      { config_id: 18, ramalesNombres: ["Retiro - Pilar / Cabred"], fnRamal: function(){ return "Retiro - Pilar / Cabred"; } }
+    ]
+  },
+  {
+    nombre: "Belgrano Sur", color: "#65a30d", cssVar: "--belgrano",
+    configs: [
+      { config_id: 30,
+        ramalesNombres: ["Dr. Sáenz - Marinos del Crucero", "Dr. Sáenz - González Catán"],
+        fnRamal: function(n, t) {
+          if (t && t.id_ramal) {
+            if (DEBUG) console.log("[Belgrano Sur] tren", n, "id_ramal:", t.id_ramal);
+            // Ajustar con id_ramal reales cuando se confirmen con datos de SIGOF2
+          }
+          var p = parseInt(String(n).substring(0,2));
+          if (p === 64 || p === 65) return "Dr. Sáenz - González Catán";
+          return "Dr. Sáenz - Marinos del Crucero";
+        }
+      }
+    ]
+  },
+  {
+    nombre: "Tren de la Costa", color: "#0891b2", cssVar: "--costa",
+    configs: [
+      { config_id: 20, ramalesNombres: ["Maipú - Delta"], fnRamal: function(){ return "Maipú - Delta"; } }
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════════════════
+var sesionCookies = null;   // guardamos las credenciales para re-auth si hace falta
+var resultadosGlobales = {};
+var ivCountdown = null;
+var srCD = REFRESH_SEG;
+var abiertos = {};  // qué líneas están expandidas
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+function safeId(s) { return s.replace(/[^a-zA-Z0-9]/g, "_"); }
+
+function calcDiff(fR, hR, fP, hP) {
+  if (!fR || !hR || !fP || !hP) return null;
+  try {
+    var r = new Date(fR + "T" + hR);
+    var p = new Date(fP + "T" + hP);
+    var d = Math.floor((r - p) / 60000);
+    return isNaN(d) ? null : d;
+  } catch(e) { return null; }
+}
+
+function tsAhora() {
+  var now = new Date();
+  return now.toLocaleDateString("es-AR") + " "
+       + now.toLocaleTimeString("es-AR", {hour:"2-digit", minute:"2-digit"}) + "hs";
+}
+
+// ══════════════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════════════
+document.getElementById("inp-pass").addEventListener("keydown", function(e){
+  if (e.key === "Enter") doLogin();
+});
+document.getElementById("inp-user").addEventListener("keydown", function(e){
+  if (e.key === "Enter") document.getElementById("inp-pass").focus();
+});
+
+function doLogin() {
+  var user = document.getElementById("inp-user").value.trim();
+  var pass = document.getElementById("inp-pass").value;
+  var errEl = document.getElementById("login-error");
+  var btn   = document.getElementById("btn-login");
+
+  errEl.style.display = "none";
+
+  if (!user || !pass) {
+    errEl.textContent = "Completá usuario y contraseña";
+    errEl.style.display = "block";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Conectando...";
+
+  // Intentar login contra SIGOF2
+  // SIGOF2 usa sesión por cookie — intentamos con fetch y credentials
+  var formData = new FormData();
+  formData.append("username", user);
+  formData.append("password", pass);
+
+  // Primero intentamos el endpoint de login estándar de SIGOF2
+  fetch(BASE_URL + "/login", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+    redirect: "follow"
+  })
+  .then(function(resp) {
+    // Si redirige a /home o similar → login OK
+    // Si vuelve al login → credenciales incorrectas
+    if (resp.ok || resp.redirected) {
+      return resp.text().then(function(html) {
+        // Verificar si el HTML de respuesta parece una sesión válida
+        // (no contiene el formulario de login)
+        var esLogin = html.indexOf("password") !== -1 && html.indexOf("form") !== -1
+                   && html.indexOf("planillon") === -1 && html.indexOf("dashboard") === -1;
+        if (esLogin && !resp.redirected) {
+          throw new Error("credenciales");
+        }
+        // Guardar credenciales para refrescar sesión si hace falta
+        sesionCookies = { user: user, pass: pass };
+        mostrarMonitor();
+      });
+    } else {
+      throw new Error("credenciales");
+    }
+  })
+  .catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = "INGRESAR";
+    if (err.message === "credenciales") {
+      errEl.textContent = "Usuario o contraseña incorrectos";
+    } else if (err.message && err.message.indexOf("NetworkError") !== -1) {
+      errEl.textContent = "Sin conexión — ¿Tenés la VPN activa?";
+    } else if (err.name === "TypeError") {
+      errEl.textContent = "No se puede conectar con SIGOF2. Verificá la VPN.";
+    } else {
+      // CORS / red → asumir que VPN no está activa o SIGOF2 rechaza el fetch directo
+      // En ese caso, intentamos acceder directamente a la API con las credenciales
+      // y dejamos que el navegador maneje la sesión
+      errEl.textContent = "Error de conexión: " + (err.message || "verificá la VPN");
+    }
+    errEl.style.display = "block";
+  });
+}
+
+function doLogout() {
+  clearInterval(ivCountdown);
+  sesionCookies = null;
+  resultadosGlobales = {};
+  abiertos = {};
+  document.getElementById("screen-monitor").style.display = "none";
+  document.getElementById("screen-login").style.display   = "flex";
+  document.getElementById("inp-pass").value = "";
+  document.getElementById("btn-login").disabled = false;
+  document.getElementById("btn-login").textContent = "INGRESAR";
+}
+
+function mostrarMonitor() {
+  document.getElementById("screen-login").style.display   = "none";
+  document.getElementById("screen-monitor").style.display = "flex";
+  renderEstructura();
+  actualizarTodo();
+  iniciarCountdown();
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER ESTRUCTURA (una sola vez)
+// ══════════════════════════════════════════════════════
+function renderEstructura() {
+  var body = document.getElementById("monitor-body");
+  var html = '<div class="countdown-bar">'
+    + '<span>Próxima actualización</span>'
+    + '<span id="cd-timer" style="color:var(--accent);font-weight:700;">10:00</span>'
+    + '</div>'
+    + '<div class="countdown-progress"><div class="countdown-fill" id="cd-fill" style="width:100%"></div></div>';
+
+  for (var i = 0; i < LINEAS.length; i++) {
+    var ln  = LINEAS[i];
+    var sid = safeId(ln.nombre);
+    html += '<div class="linea-card" id="card-' + sid + '">'
+      + '<div class="linea-header" onclick="toggleLinea(\'' + sid + '\')">'
+      + '<div class="linea-header-left">'
+      + '<div class="linea-dot" style="background:' + ln.color + ';"></div>'
+      + '<span class="linea-nombre" style="color:' + ln.color + ';">' + ln.nombre + '</span>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<span class="linea-badge badge-load" id="badge-' + sid + '">...</span>'
+      + '<span class="linea-toggle" id="toggle-' + sid + '">▾</span>'
+      + '</div>'
+      + '</div>'
+      + '<div class="linea-body" id="body-' + sid + '">'
+      + '<div class="loading"><div class="spinner"></div>Cargando...</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  body.innerHTML = html;
+
+  // Abrir la primera línea por defecto
+  if (LINEAS.length > 0) {
+    var firstSid = safeId(LINEAS[0].nombre);
+    abiertos[firstSid] = true;
+    document.getElementById("body-" + firstSid).classList.add("open");
+    document.getElementById("toggle-" + firstSid).classList.add("open");
+  }
+}
+
+function toggleLinea(sid) {
+  var body   = document.getElementById("body-" + sid);
+  var toggle = document.getElementById("toggle-" + sid);
+  if (!body) return;
+  if (body.classList.contains("open")) {
+    body.classList.remove("open");
+    toggle.classList.remove("open");
+    abiertos[sid] = false;
+  } else {
+    body.classList.add("open");
+    toggle.classList.add("open");
+    abiertos[sid] = true;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  PROCESAMIENTO
+// ══════════════════════════════════════════════════════
+function procesarAPI(tren, fnRamal) {
+  if (typeof tren !== "object" || !tren) return null;
+  var nro = tren.numero || tren.tren || "?";
+  var sen = tren.sentido === 1 ? "Ida" : tren.sentido === 2 ? "Vuelta" : String(tren.sentido || "?");
+  var ram = fnRamal(nro, tren);
+
+  if (tren.cancelacion === 1 || (tren.cumplimiento || "").toUpperCase() === "CT")
+    return { ramal: ram, sentido: sen, nro: nro, estado: "🚫 Cancelado (CT)", prioridad: 1 };
+  if ((tren.cumplimiento || "").toUpperCase() === "SP")
+    return { ramal: ram, sentido: sen, nro: nro, estado: "⛔ Suspendido (SP)", prioridad: 1 };
+
+  var det = tren.detalle || [], n = det.length, mx = null, mEst = "";
+  for (var k = 0; k < n; k++) {
+    var p = det[k];
+    if (typeof p !== "object" || !p) continue;
+    if (p.tipo_punto_id && p.tipo_punto_id !== 1) continue;
+    var dd = (k === n-1)
+      ? calcDiff(p.fecha_real_llega, p.hora_real_llega, p.fecha_adicional_llega, p.hora_adicional_llega)
+      : calcDiff(p.fecha_real_sale,  p.hora_real_sale,  p.fecha_adicional_sale,  p.hora_adicional_sale);
+    if (dd !== null && (mx === null || dd > mx)) { mx = dd; mEst = p.punto_nombre_punto || p.punto_nombre || ""; }
+  }
+  if (mx !== null && mx >= DEMORA_MINIMA)
+    return { ramal: ram, sentido: sen, nro: nro,
+             estado: "⏱ Demorado " + mx + " min" + (mEst ? " (" + mEst + ")" : ""), prioridad: 2 };
+  return null;
+}
+
+// ══════════════════════════════════════════════════════
+//  FETCH DE DATOS
+// ══════════════════════════════════════════════════════
+function fetchLinea(linea, callback) {
+  var resultados = [];
+  var hoy  = new Date().toISOString().split("T")[0];
+  var pend = linea.configs.length;
+  var term = 0;
+
+  function check() {
+    term++;
+    if (term >= pend) {
+      resultados.sort(function(a,b){ return a.prioridad - b.prioridad; });
+      callback(null, resultados);
+    }
+  }
+
+  for (var ci = 0; ci < linea.configs.length; ci++) {
+    (function(cfg) {
+      var url = BASE_URL + "/planillonVue2_getTrenesReales/" + cfg.config_id + "/" + hoy;
+      fetch(url, { credentials: "include" })
+        .then(function(resp) {
+          if (resp.status === 401 || resp.status === 403) throw new Error("auth");
+          if (!resp.ok) throw new Error("http_" + resp.status);
+          return resp.json();
+        })
+        .then(function(data) {
+          var trenes = (data && data.trenes_reales) || (Array.isArray(data) ? data : []);
+          for (var t = 0; t < trenes.length; t++) {
+            var al = procesarAPI(trenes[t], cfg.fnRamal);
+            if (al) resultados.push(al);
+          }
+          check();
+        })
+        .catch(function(err) {
+          if (DEBUG) console.warn("[Monitor] cfg " + cfg.config_id + ":", err.message);
+          check();
+        });
+    })(linea.configs[ci]);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER DE UNA LÍNEA
+// ══════════════════════════════════════════════════════
+function renderLinea(linea, alertas) {
+  var sid    = safeId(linea.nombre);
+  var bodyEl = document.getElementById("body-" + sid);
+  var badgeEl= document.getElementById("badge-" + sid);
+  if (!bodyEl) return;
+
+  // Actualizar badge
+  if (alertas.length === 0) {
+    badgeEl.textContent = "OK";
+    badgeEl.className   = "linea-badge badge-ok";
+  } else {
+    badgeEl.textContent = alertas.length + " alerta" + (alertas.length > 1 ? "s" : "");
+    badgeEl.className   = "linea-badge badge-alert";
+  }
+
+  // Colectar ramales
+  var ramalesNombres = [], seen = {};
+  for (var ci = 0; ci < linea.configs.length; ci++) {
+    var nms = linea.configs[ci].ramalesNombres;
+    for (var ri = 0; ri < nms.length; ri++) {
+      if (!seen[nms[ri]]) { seen[nms[ri]] = true; ramalesNombres.push(nms[ri]); }
+    }
+  }
+  for (var ai = 0; ai < alertas.length; ai++) {
+    if (!seen[alertas[ai].ramal]) { seen[alertas[ai].ramal] = true; ramalesNombres.push(alertas[ai].ramal); }
+  }
+
+  // Filtros WA
+  var cbHtml = '<div class="wa-filtros">'
+    + '<span class="wa-filtros-label">Incluir en WA:</span>';
+  for (var ri2 = 0; ri2 < ramalesNombres.length; ri2++) {
+    var rn   = ramalesNombres[ri2];
+    var cbId = "cb-" + sid + "-" + ri2;
+    cbHtml += '<label class="cb-ramal">'
+      + '<input type="checkbox" id="' + cbId + '" class="sofse-cb-' + sid
+      + '" data-ramal="' + rn + '" checked>'
+      + rn + '</label>';
+  }
+  cbHtml += '</div>';
+
+  // Alertas agrupadas por ramal
+  var porRamal = {};
+  for (var ai2 = 0; ai2 < alertas.length; ai2++) {
+    var rr = alertas[ai2].ramal;
+    if (!porRamal[rr]) porRamal[rr] = [];
+    porRamal[rr].push(alertas[ai2]);
+  }
+
+  var alertasHtml = "";
+  if (alertas.length === 0) {
+    alertasHtml = '<div class="sin-novedades">✅ Todos los ramales operan con normalidad</div>';
+  } else {
+    for (var rIdx = 0; rIdx < ramalesNombres.length; rIdx++) {
+      var rNom = ramalesNombres[rIdx];
+      var rAls = porRamal[rNom];
+      if (!rAls || rAls.length === 0) {
+        alertasHtml += '<div class="sin-novedades" style="font-size:11px;">✅ ' + rNom + ': sin novedades</div>';
+      } else {
+        alertasHtml += '<div class="ramal-grupo-titulo">🔴 ' + rNom + '</div>'
+          + '<table class="alertas-tabla"><thead><tr>'
+          + '<th>Tren</th><th>Sentido</th><th>Estado</th>'
+          + '</tr></thead><tbody>';
+        for (var tti = 0; tti < rAls.length; tti++) {
+          alertasHtml += '<tr>'
+            + '<td style="font-weight:600;color:#f1f5f9;font-family:var(--font-mono);">' + rAls[tti].nro + '</td>'
+            + '<td style="color:var(--muted);font-size:12px;">' + rAls[tti].sentido + '</td>'
+            + '<td class="estado-chip">' + rAls[tti].estado + '</td>'
+            + '</tr>';
+        }
+        alertasHtml += '</tbody></table>';
+      }
+    }
+  }
+
+  // Botón WA
+  var waBtnHtml = '<button class="btn-wa" onclick="compartirWA(\'' + sid + '\')">📱 Compartir por WhatsApp</button>';
+
+  bodyEl.innerHTML = cbHtml + alertasHtml + waBtnHtml;
+  resultadosGlobales[linea.nombre] = alertas;
+}
+
+// ══════════════════════════════════════════════════════
+//  WHATSAPP
+// ══════════════════════════════════════════════════════
+function compartirWA(sid) {
+  // Buscar la línea
+  var linea = null;
+  for (var i = 0; i < LINEAS.length; i++) {
+    if (safeId(LINEAS[i].nombre) === sid) { linea = LINEAS[i]; break; }
+  }
+  if (!linea) return;
+
+  var alertas = resultadosGlobales[linea.nombre] || [];
+  var cbs     = document.querySelectorAll(".sofse-cb-" + sid);
+  var filtro  = {};
+  for (var i2 = 0; i2 < cbs.length; i2++) {
+    filtro[cbs[i2].getAttribute("data-ramal")] = cbs[i2].checked;
+  }
+
+  var filtradas = alertas.filter(function(a){ return filtro[a.ramal] !== false; });
+  var ts  = tsAhora();
+  var msg = "🚆 *" + linea.nombre.toUpperCase() + "* — " + ts + "\n\n";
+
+  if (filtradas.length === 0) {
+    msg += "✅ Sin alertas\n_Monitor SOFSE_";
+  } else {
+    var porRamal = {};
+    for (var j = 0; j < filtradas.length; j++) {
+      if (!porRamal[filtradas[j].ramal]) porRamal[filtradas[j].ramal] = [];
+      porRamal[filtradas[j].ramal].push(filtradas[j]);
+    }
+    var rls = Object.keys(porRamal);
+    for (var r = 0; r < rls.length; r++) {
+      msg += "🔴 *" + rls[r] + "*\n";
+      var lst = porRamal[rls[r]];
+      for (var ll = 0; ll < lst.length; ll++) {
+        msg += "• Tren " + lst[ll].nro + " | " + lst[ll].sentido + " → " + lst[ll].estado + "\n";
+      }
+      msg += "\n";
+    }
+    msg += "_Monitor SOFSE_";
+  }
+
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+}
+
+// ══════════════════════════════════════════════════════
+//  ACTUALIZACIÓN
+// ══════════════════════════════════════════════════════
+function actualizarTodo() {
+  var tsEl = document.getElementById("topbar-ts");
+  if (tsEl) tsEl.textContent = "Actualizando...";
+
+  // Mostrar spinner en todas las líneas abiertas
+  for (var i = 0; i < LINEAS.length; i++) {
+    var sid   = safeId(LINEAS[i].nombre);
+    var badge = document.getElementById("badge-" + sid);
+    if (badge) { badge.textContent = "..."; badge.className = "linea-badge badge-load"; }
+    var bodyEl = document.getElementById("body-" + sid);
+    if (bodyEl && abiertos[sid]) {
+      bodyEl.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando...</div>';
+    }
+  }
+
+  var completadas = 0;
+  var total       = LINEAS.length;
+
+  for (var li = 0; li < LINEAS.length; li++) {
+    (function(linea) {
+      fetchLinea(linea, function(err, alertas) {
+        renderLinea(linea, alertas || []);
+        completadas++;
+        if (completadas >= total) {
+          var tsEl2 = document.getElementById("topbar-ts");
+          if (tsEl2) tsEl2.textContent = "Actualizado: " + tsAhora();
+          srCD = REFRESH_SEG;
+        }
+      });
+    })(LINEAS[li]);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  COUNTDOWN
+// ══════════════════════════════════════════════════════
+function iniciarCountdown() {
+  clearInterval(ivCountdown);
+  srCD = REFRESH_SEG;
+  ivCountdown = setInterval(function() {
+    srCD--;
+    var min = Math.floor(srCD / 60), seg = srCD % 60;
+    var el  = document.getElementById("cd-timer");
+    var fl  = document.getElementById("cd-fill");
+    if (el) el.textContent = min + ":" + (seg < 10 ? "0" : "") + seg;
+    if (fl) fl.style.width = ((srCD / REFRESH_SEG) * 100) + "%";
+    if (srCD <= 0) { srCD = REFRESH_SEG; actualizarTodo(); }
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════
+//  SERVICE WORKER (PWA install)
+// ══════════════════════════════════════════════════════
+if ("serviceWorker" in navigator) {
+  // SW inline para PWA básica — permite instalar en home screen
+  var swCode = [
+    "self.addEventListener('install', function(e){ self.skipWaiting(); });",
+    "self.addEventListener('activate', function(e){ e.waitUntil(clients.claim()); });",
+    "self.addEventListener('fetch', function(e){",
+    "  if (e.request.url.indexOf('sigof2.sofse.gob.ar') !== -1) return;",
+    "  e.respondWith(fetch(e.request));",
+    "});"
+  ].join("\n");
+
+  var blob = new Blob([swCode], {type: "application/javascript"});
+  var swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(function(){});
+}
+</script>
+</body>
+</html>
